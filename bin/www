@@ -4,9 +4,13 @@
  * Module dependencies.
  */
 
-var app = require('../app');
+require('../config').initialize();
+
+const path = require('path');
 var debug = require('debug')('evan-portfolio-api:server');
 var http = require('http');
+
+var app = require('../app');
 
 /**
  * Get port from environment and store in Express.
