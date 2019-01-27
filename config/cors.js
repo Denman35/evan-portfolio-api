@@ -2,6 +2,7 @@ const whitelist = [];
 
 if (process.env.NODE_ENV === 'development') {
   whitelist.push('http://localhost:3000');
+  whitelist.push('http://localhost:3001');
   whitelist.push('http://localhost:8080');
 }
 

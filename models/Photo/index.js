@@ -39,11 +39,26 @@ const createRecord = (metadata, links, widths) => {
         location: metadata.location,
         description: metadata.description,
         images,
+        createdat: new Date(),
       });
+    });
+}
+
+const getPhotos = (limit, skip) => {
+  return getDbClient()
+    .then(client => {
+      const db = client.db();
+      const collection = db.collection(PHOTO_COLLECTION);
+      return collection.find({}, {
+        sort: [['createdat', -1]],
+        limit,
+        skip,
+      }).toArray();
     });
 }
 
 module.exports = {
   createRecord,
+  getPhotos,
   uploadS3,
 };

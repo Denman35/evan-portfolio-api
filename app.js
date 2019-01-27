@@ -10,7 +10,7 @@ const portfolioRouter = require('./routes/portfolio');
 
 const app = express();
 
-app.use(cors(corsConfig));
+app.use(cors());
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

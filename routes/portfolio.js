@@ -7,10 +7,18 @@ const upload = multer();
 
 const { breakpoints } = require('../config/image');
 const { resizePhoto, getPhotoWidth } = require('../controllers/Photo');
-const { uploadS3, createRecord } = require('../models/Photo');
+const { uploadS3, createRecord, getPhotos } = require('../models/Photo');
 
 router.get('/', function(req, res, next) {
-  res.json({ title: 'Express' });
+  let { limit, skip } = req.query;
+  limit = parseInt(limit, 10);
+  skip = parseInt(skip, 10);
+  if (isNaN(limit)) { limit = 0; }
+  if (isNaN(skip)) { skip = 0; }
+
+  getPhotos(limit, skip)
+    .then(photos => res.json({ photos: photos }))
+    .catch(err => next(err));
 });
 
 router.get('/:id', function(req, res, next) {
@@ -18,7 +26,6 @@ router.get('/:id', function(req, res, next) {
 });
 
 router.post('/upload', upload.single('image'), (req, res, next) => {
-  console.log('UPLOAD CALLED');
   const { buffer } = req.file;
   const jobs = [];
   const widths = [];
@@ -37,10 +44,7 @@ router.post('/upload', upload.single('image'), (req, res, next) => {
   jobs.push(og);
 
   Promise.all(jobs)
-    .then(links => {
-      console.log(links);
-      return createRecord(req.body, links, widths);
-    })
+    .then(links => createRecord(req.body, links, widths))
     .then(() => res.json({ success: true }))
     .catch(err => next(err));
 });
