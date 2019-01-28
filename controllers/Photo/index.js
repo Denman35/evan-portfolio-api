@@ -3,16 +3,14 @@ const sharp = require('sharp');
 const resizePhoto = (buffer, width) => {
   return sharp(buffer)
     .resize({ width })
-    .toBuffer()
+    .toBuffer({ resolveWithObject: true })
 }
 
-const getPhotoWidth = (buffer) => {
-  return sharp(buffer)
-    .metadata()
-    .then(metadata => Promise.resolve(metadata.width));
+const getPhotoMetdata = (buffer) => {
+  return sharp(buffer).metadata();
 }
 
 module.exports = {
   resizePhoto,
-  getPhotoWidth,
+  getPhotoMetdata,
 };

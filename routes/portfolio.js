@@ -6,8 +6,8 @@ const router = express.Router();
 const upload = multer();
 
 const { breakpoints } = require('../config/image');
-const { resizePhoto, getPhotoWidth } = require('../controllers/Photo');
-const { uploadS3, createRecord, getPhotos } = require('../models/Photo');
+const { resizePhoto, getPhotoMetdata } = require('../controllers/Photo');
+const { uploadS3, createRecord, getPhotos, getPhotoById } = require('../models/Photo');
 
 router.get('/', function(req, res, next) {
   let { limit, skip } = req.query;
@@ -22,29 +22,34 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/:id', function(req, res, next) {
-  res.json({ id: req.params.id });
+  getPhotoById(req.params.id)
+    .then(photo => res.json(photo))
+    .catch(err => next(err));
 });
 
 router.post('/upload', upload.single('image'), (req, res, next) => {
   const { buffer } = req.file;
   const jobs = [];
-  const widths = [];
+  const metadata = breakpoints.map(() => ({}));
   const id = uuidv1();
-  breakpoints.forEach(b => {
+  breakpoints.forEach((b, idx) => {
     const resizeJob = resizePhoto(buffer, b.width);
-    const uploadJob = resizeJob.then(buffer => uploadS3(buffer, id, b.size, req.file.mimetype));
+    const uploadJob = resizeJob.then(({ data, info }) => {
+      metadata[idx].width = info.width;
+      metadata[idx].height = info.height;
+      return uploadS3(data, id, b.size, req.file.mimetype);
+    });
     jobs.push(uploadJob);
-    widths.push(b.width);
   });
-  const og = getPhotoWidth(buffer)
-    .then(width => {
-      widths.push(width);
+  const og = getPhotoMetdata(buffer)
+    .then(m => {
+      metadata.push({ width: m.width, height: m.height });
       return uploadS3(buffer, id, 'OG', req.file.mimetype);
     });
   jobs.push(og);
 
   Promise.all(jobs)
-    .then(links => createRecord(req.body, links, widths))
+    .then(links => createRecord(req.body, links, metadata))
     .then(() => res.json({ success: true }))
     .catch(err => next(err));
 });

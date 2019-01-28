@@ -7,6 +7,7 @@ const path = require('path');
 const corsConfig = require('./config/cors');
 const indexRouter = require('./routes/index');
 const portfolioRouter = require('./routes/portfolio');
+const featuredRouter = require('./routes/featured');
 
 const app = express();
 
@@ -19,5 +20,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/portfolio', portfolioRouter);
+app.use('/featured', featuredRouter);
 
 module.exports = app;

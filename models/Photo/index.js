@@ -1,4 +1,5 @@
 const AWS = require('aws-sdk');
+const ObjectID = require('mongodb').ObjectID;
 
 const { getDbClient } = require('../../config/db');
 const PHOTO_COLLECTION = 'photos';
@@ -28,8 +29,12 @@ const uploadS3 = (buffer, id, size, mimetype) => {
   });
 }
 
-const createRecord = (metadata, links, widths) => {
-  const images = links.map((x, i) => ({ url: x, width: widths[i] }));
+const createRecord = (metadata, links, img) => {
+  const images = links.map((x, i) => ({
+    url: x,
+    width: img[i].width,
+    height: img[i].height,
+  }));
   return getDbClient()
     .then(client => {
       const db = client.db();
@@ -57,8 +62,18 @@ const getPhotos = (limit, skip) => {
     });
 }
 
+const getPhotoById = (id) => {
+  return getDbClient()
+    .then(client => {
+      const db = client.db();
+      const collection = db.collection(PHOTO_COLLECTION);
+      return collection.findOne({ _id: new ObjectID(id) });
+    });
+}
+
 module.exports = {
   createRecord,
   getPhotos,
+  getPhotoById,
   uploadS3,
 };
