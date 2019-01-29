@@ -85,10 +85,24 @@ const getPhotoById = (id) => {
     });
 }
 
+const updatePhotoById = (id, update) => {
+  return getDbClient()
+    .then(client => {
+      const db = client.db();
+      const collection = db.collection(PHOTO_COLLECTION);
+
+      const objID = new ObjectID(id);
+      return collection.updateOne({ _id: objID }, {
+        $set: update,
+      }).then(closeClient(client));
+    });
+}
+
 module.exports = {
   createRecord,
   getPhotos,
   getPhotoById,
   uploadS3,
   mimeMap,
+  updatePhotoById,
 };
