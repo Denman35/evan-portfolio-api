@@ -1,7 +1,7 @@
 const AWS = require('aws-sdk');
 const ObjectID = require('mongodb').ObjectID;
 
-const { getDbClient } = require('../../config/db');
+const { getDbClient, closeClient } = require('../../config/db');
 const PHOTO_COLLECTION = 'photos';
 
 const mimeMap = {
@@ -45,7 +45,7 @@ const createRecord = (metadata, links, img) => {
         description: metadata.description,
         images,
         createdat: new Date(),
-      });
+      }).then(closeClient(client));
     });
 }
 
@@ -58,7 +58,7 @@ const getPhotos = (limit, skip) => {
         sort: [['createdat', -1]],
         limit,
         skip,
-      }).toArray();
+      }).toArray().then(closeClient(client));
     });
 }
 
@@ -67,7 +67,21 @@ const getPhotoById = (id) => {
     .then(client => {
       const db = client.db();
       const collection = db.collection(PHOTO_COLLECTION);
-      return collection.findOne({ _id: new ObjectID(id) });
+
+      const objID = new ObjectID(id);
+      const find = collection.findOne({ _id: objID });
+      const next = collection.find({ _id: { '$lt': objID }}, {
+        sort: [['_id', -1]],
+        limit: 1,
+        projection: { _id: 1 },
+      }).toArray();
+      const prev = collection.find({ _id: { '$gt': objID }}, {
+        sort: [['_id', 1]],
+        limit: 1,
+        projection: { _id: 1 },
+      }).toArray();
+
+      return Promise.all([find, prev, next]).then(closeClient(client));
     });
 }
 
@@ -76,4 +90,5 @@ module.exports = {
   getPhotos,
   getPhotoById,
   uploadS3,
+  mimeMap,
 };

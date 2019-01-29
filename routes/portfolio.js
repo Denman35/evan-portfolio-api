@@ -23,7 +23,15 @@ router.get('/', function(req, res, next) {
 
 router.get('/:id', function(req, res, next) {
   getPhotoById(req.params.id)
-    .then(photo => res.json(photo))
+    .then(photoInfo => {
+      let prev = photoInfo[1].length > 0 ? photoInfo[1][0]._id : null;
+      let next = photoInfo[2].length > 0 ? photoInfo[2][0]._id : null;
+      res.json({
+        prev,
+        next,
+        photo: photoInfo[0],
+      });
+    })
     .catch(err => next(err));
 });
 

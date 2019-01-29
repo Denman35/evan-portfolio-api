@@ -1,16 +1,11 @@
 const MongoClient = require('mongodb').MongoClient;
 
-let CONFIG = {};
-
-const LOCAL_CONFIG = {
-  url: 'mongodb://localhost:27017',
-  db: 'portfolio',
-};
-
-if (process.env.NODE_ENV === 'development') {
-  CONFIG = LOCAL_CONFIG;
+const closeClient = (client) => (x) => {
+  client.close();
+  return Promise.resolve(x);
 }
 
 module.exports = {
-  getDbClient: () => MongoClient.connect(`${CONFIG.url}/${CONFIG.db}`, { useNewUrlParser: true }),
+  getDbClient: () => MongoClient.connect(process.env.MONGO_URI, { useNewUrlParser: true }),
+  closeClient,
 };
