@@ -5,6 +5,8 @@ const uuidv1 = require('uuid/v1');
 const router = express.Router();
 const upload = multer();
 
+const { ensureAuth } = require('../middlewares/auth');
+
 const { getFeatured, uploadFeatureS3, createRecord } = require('../models/Features');
 
 router.get('/', function(req, res, next) {
@@ -13,7 +15,7 @@ router.get('/', function(req, res, next) {
     .catch(err => next(err));
 });
 
-router.post('/upload', upload.single('image'), (req, res, next) => {
+router.post('/upload', ensureAuth, upload.single('image'), (req, res, next) => {
   const { buffer } = req.file;
   const s3key = uuidv1();
 

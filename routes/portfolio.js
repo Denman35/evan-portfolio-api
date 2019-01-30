@@ -1,10 +1,12 @@
 const express = require('express');
 const multer  = require('multer');
+const passport = require('passport');
 const uuidv1 = require('uuid/v1');
 
 const router = express.Router();
 const upload = multer();
 
+const { ensureAuth } = require('../middlewares/auth');
 const { breakpoints } = require('../config/image');
 const { resizePhoto, getPhotoMetdata } = require('../controllers/Photo');
 const {
@@ -27,7 +29,7 @@ router.get('/', function(req, res, next) {
     .catch(err => next(err));
 });
 
-router.post('/upload', upload.single('image'), (req, res, next) => {
+router.post('/upload', ensureAuth, upload.single('image'), (req, res, next) => {
   const { buffer } = req.file;
   const jobs = [];
   const metadata = breakpoints.map(() => ({}));
@@ -69,14 +71,25 @@ router.get('/:id', function(req, res, next) {
 });
 
 const ALLOWED_FIELDS = ['location', 'description'];
-router.put('/:id', (req, res, next) => {
-  Object.keys(req.body).forEach(k => {
-    if (ALLOWED_FIELDS.indexOf(k) === -1) { next(`Invalid field ${k}`); }
-    if (typeof req.body[k] !== 'string') { next("Invalid Body"); }
+router.put('/:id', ensureAuth, (req, res, next) => {
+  let err = null;
+
+  const update = {};
+  let dirty = false;
+  ALLOWED_FIELDS.forEach(f => {
+    if (f in req.body && typeof req.body[f] === 'string') {
+      update[f] = req.body[f];
+      dirty = true;
+    }
   });
-  updatePhotoById(req.params.id, req.body)
-    .then(res.json({ success: true }))
-    .catch(err => next(err));
+
+  if (dirty) {
+    updatePhotoById(req.params.id, update)
+      .then(res.json({ success: true }))
+      .catch(err => next(err));
+  } else {
+    res.json({ success: true });
+  }
 });
 
 module.exports = router;
